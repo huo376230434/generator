@@ -2,6 +2,7 @@
 namespace Huojunhao\Generator\DwMake\Utils;
 
 use App\Lib\Common\CommonBase\FileUtil;
+use Illuminate\Support\Str;
 
 /**
  * Created by PhpStorm.
@@ -19,13 +20,40 @@ trait DwMakeTrait{
 
         $stub_path = $item['stub_path'];
         $des_path = $item['des_path'];
+        $extra_params = $item['params'] ?? null;
+//        dd(realpath($stub_path));
+//        dd(is_dir($stub_path));
+        if (!is_dir($stub_path)) {
+            $this->moveFile($stub_path, $template_words, $replace_words, $des_path,$extra_params);
+        }
+        else{
+            //移动文件夹
+            $files = FileUtil::allFile($stub_path);
+            foreach ($files as $sub_file_path) {
+                $temp_stub_path_dir = Str::finish($stub_path, '/');
+                $temp_des_path_dir = Str::finish($des_path, '/');
+                $temp_item = [
+                    'stub_path' =>$temp_stub_path_dir.$sub_file_path,
+                    'des_path' => $temp_des_path_dir.$sub_file_path
+                ];
+                if ($extra_params) {
+                    $temp_item['params'] = $extra_params;
+                }
+                $this->make_stub($temp_item, $template_words, $replace_words);
+            }
+        }
+    }
+
+
+    protected function moveFile($stub_path,$template_words,$replace_words,$des_path,$extra_params=null)
+    {
         $contents = file_get_contents($stub_path);
         $contents = str_replace($template_words,$replace_words,$contents);
-       if (isset($item['params'])){
-           $contents = str_replace(array_keys($item['params']), array_values($item['params']),$contents);
-       }
+        if ($extra_params){
+            $contents = str_replace(array_keys($extra_params), array_values($extra_params),$contents);
+        }
         FileUtil::recursionFilePutContents($des_path, $contents);
-//        file_put_contents($des_path,$contents);
+        $this->info('生成' . $des_path);
     }
 
     protected function getBaseStubDir()
@@ -90,7 +118,6 @@ trait DwMakeTrait{
         $new_arr = [];
         foreach ($fields as $key => $common_field) {
             $temp = explode("|", $key);
-//            dump($temp);
             foreach ($temp as $item) {
                 $new_arr[$item] = $common_field;
             }

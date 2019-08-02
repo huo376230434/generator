@@ -97,7 +97,7 @@ DDD;
         return $this->command_param . 'ServiceProvider';
     }
 
-    protected function makeCommand()
+    public function makeCommand()
     {
         if (file_exists($this->git_hub_dir . 'composer.json')) {
             $this->error($this->command_param.'已存在');

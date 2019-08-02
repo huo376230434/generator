@@ -3,6 +3,7 @@ namespace Huojunhao\Generator\DwMake\Utils;
 
 use App\Lib\Common\CommonBase\FileUtil;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 /**
  * Created by PhpStorm.
@@ -10,11 +11,30 @@ use Illuminate\Console\Command;
  * Date: 2018/4/13
  * Time: 18:44
  */
-class DwMakeBase extends Command{
+abstract  class DwMakeBase extends Command{
     use DwMakeTrait;
 
     protected $template_words=[];
     protected $replace_words=[];
+
+    protected $model_dir;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->model_dir = app_path("Models/");
+
+    }
+
+    protected function getModelArr()
+    {
+        $models = FileUtil::allFileWithoutDir($this->model_dir);
+        return collect($models)->reject((function ($value,$key){
+            return Str::startsWith($value,'ZZ');
+        }))->map(function($value,$key){
+            return substr($value,0,-4);
+        })->toArray();
+    }
 
     protected function removePrefix()
     {
@@ -25,9 +45,16 @@ class DwMakeBase extends Command{
     {
         $this->removePrefix();
         foreach ($this->getTasks() as $task) {
+            $this->info('删除' . $task['des_path']);
             FileUtil::unlinkFileOrDir($task['des_path']);
         }
         $this->removedCallback();
+    }
+
+    protected function errorDie($msg)
+    {
+        $this->error($msg);
+        die;
     }
 
     protected function removedCallback()
@@ -48,24 +75,11 @@ class DwMakeBase extends Command{
     }
 
 
-    protected function makeCommand()
-    {
-        // fixme 需要子类继承
-    }
+    abstract protected function makeCommand();
 
+    abstract protected function init_configs();
 
-
-    protected function init_configs()
-    {
-        // fixme 需要子类继承
-    }
-
-
-    protected function getTasks()
-    {
-        // fixme 需要子类继承
-    }
-
+    abstract protected function getTasks();
 
 
 }
