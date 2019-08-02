@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Model;
+namespace App\Models;
 
 
-use App\Model\Base\BaseModel;
+use App\Models\Base\BaseModel;
 
 
 

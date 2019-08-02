@@ -24,7 +24,7 @@ class DwMakeModel extends DwMakeBase
 
     protected $stub_dir;
 
-    protected $base_namespace = "App\Model\\";
+    protected $base_namespace = "App\Models\\";
     protected $model_name;
     protected $model = "";
     protected $migration_type;

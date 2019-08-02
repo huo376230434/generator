@@ -3,10 +3,12 @@
 namespace Huojunhao\Generator\DwMake;
 
 use App\Lib\Common\CommonBase\FileUtil;
+use App\Lib\Common\CommonBase\RegPatterns;
 use App\Lib\Common\CommonBase\ScatteredUtil;
 use App\Lib\Common\Dictionary\Dwfaker;
 use App\Lib\Common\Utils\Env;
 use Huojunhao\Generator\DwMake\Utils\DwMakeBase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class DwMakeModels extends DwMakeBase
@@ -35,7 +37,7 @@ class DwMakeModels extends DwMakeBase
     protected $model_dir;
     protected $model_traits_dir;
 
-    protected $base_namespace = "App\Model\\";
+    protected $base_namespace = "App\Models\\";
 
     protected $excluded_fields = ["id","created_at","updated_at"];
     protected $model_arr=[];
@@ -120,40 +122,30 @@ DDD;
 
 
 
+
     protected function init_configs()
     {
         $this->stub_dir = $this->getBaseStubDir().'/modelsStubs/';
-        $this->model_dir = app_path("Models/");
-
         $this->factories_dir = database_path("factories/");
-
         $this->env_arr = Env::resolve(storage_path("quickdev"),$this->env_name);
-
         $this->model_arr = $this->getModelArr();
-
         $this->factory_arr = FileUtil::allFileWithoutDir($this->factories_dir);
         $this->faker_common_fields =  $this->initCommonFields($this->faker_common_fields);
-        $shim_path = $this->factories_dir . "aashim.php";
+        $shim_path =storage_path('quickdev/factory/aashim.php') ;
         if (is_file($shim_path)) {
-
             $this->shim_arr = require $shim_path;
-            $this->shim_arr = array_dot($this->shim_arr);
-
+            $this->shim_arr = Arr::dot($this->shim_arr);
         }
-        // dd($this->shim_arr);
         $this->dwfaker_methods =  ScatteredUtil::getPublicMethods(Dwfaker::class) ? : [];
-
     }
 
     protected function makeCommand()
     {
 
-        $this->init_configs();//初始化配置项
         //根据env 文件 进行创建表或者增加，删除字段等操作
         $this->doByEnv();
 
-
-        //自动生成关联关系，目前只生成一对多
+        //自动生成关联关系，目前只生成一对多 多对多
         $this->genModelRelations();
 
         //自动生成测试factories
@@ -168,15 +160,16 @@ DDD;
 //        $this->quickTask($dummies, $this->getTasks());
     }
 
-
+protected function handleRemove()
+{
+    $this->warn("由于此命令太过复杂，不提供自动删除命令，手动删除吧！");
+    die;
+}
 
     protected function getTasks()
     {
         $tasks = [
-            [
-                'stub_path' => $this->stub_dir . 'models.stub.php',
-                'des_path' => $this->des_dir  . $this->command_param . ".php"
-            ]
+
         ];
         return $tasks;
 
@@ -188,17 +181,13 @@ DDD;
     {
 
         foreach ($this->env_arr  as $key => $fields) {
-            $table = str_plural(snake_case($key));
+            $table = Str::plural(Str::snake($key));
             //先判断模型存在不存在，不存在则生成
-
-
             if (!in_array($key, $this->model_arr)) {
-
                 \Artisan::call("dm:model" ,[
                     "model" => $key
                 ] );
             }
-
             if (!\Schema::hasTable($table)) {
                 //表不存在，则创建表
                 $this->createTable($key);
@@ -215,7 +204,7 @@ DDD;
 
     protected function updateColumnsIfneeded($key)
     {
-        $table = str_plural(snake_case($key));
+        $table = Str::plural(Str::snake($key));
         $fields = explode(",",$this->env_arr[$key]);
         $add_arr = [];
         $drop_arr = [];
@@ -224,7 +213,6 @@ DDD;
                 $add_arr[] = $field;
             }
         }
-
 
         !empty($add_arr) && \Artisan::call("dm:migration", [
             "table" => $table,
@@ -245,28 +233,18 @@ DDD;
             "--type" => "drop",
             "--fields" => implode(",", $drop_arr)
         ]);
-
     }
 
 
     protected function createTable($key)
     {
         $fields = $this->env_arr[$key];
-        \Artisan::call("dm:model", [
-            "model" => $key,
-            "--m" => true,
-            "--fields" => $fields
-        ]);
-    }
 
-    protected function getModelArr()
-    {
-        $models = FileUtil::allFileWithoutDir($this->model_dir);
-        return collect($models)->map(function($value,$key){
-            return substr($value,0,-4);
-        })->toArray();
+        $shell = " php  " . base_path('artisan') . ' dm:model ' . $key . ' --m ' . ' --fields=' . $fields;
+        $this->info(shell_exec($shell));
 
     }
+
 
     protected function genTestFactories()
     {
@@ -283,7 +261,7 @@ DDD;
     {
 
 //        生成最终的全部生成factories;
-        $factories_config = $this->factories_dir . "aatotal_config.php";
+        $factories_config =  storage_path('quickdev/factory/aatotal_config.php');
         if (file_exists($factories_config)) {
             $content = file_get_contents($factories_config);
             $content = trim($content);
@@ -301,7 +279,7 @@ DDD;
         $res = '';
         foreach ($this->getRealModelArr() as $item) {
 //            先判断是否已经存在于配置过的文件里,存在的就不要再写进去了
-            if (str_contains($content, "'".$item."'")) {
+            if (Str::contains($content, "'".$item."'")) {
                 continue;
             }
             $res .= <<<DDD
@@ -322,7 +300,7 @@ DDD;
 
         return  collect($this->model_arr)->filter(function($value,$key){
             //表不存在，则直接返回
-            $table = str_plural(snake_case($value));
+            $table = Str::plural(Str::snake($value));
             if (!\Schema::hasTable($table)) {
                 return false;
             }
@@ -334,15 +312,12 @@ DDD;
     protected function factoryHasFixed($model)
     {
         return in_array('ZFix'.$this->getTestFactoryName($model), $this->factory_arr);
-
-
-
     }
 
     protected function genTestFactory($model)
     {
         //表不存在，则直接返回
-        $table = str_plural(snake_case($model));
+        $table = Str::plural(Str::snake($model));
         if (!\Schema::hasTable($table)) {
             return false;
         }
@@ -399,7 +374,7 @@ DDD;
         if (empty($this->shim_arr)) {
             return false;
         }
-        $arr_key = "App\Model\\".$model . '.' . $column;
+        $arr_key = "App\Models\\".$model . '.' . $column;
         if (array_key_exists($arr_key, $this->shim_arr)) {
             $value = $this->shim_arr[$arr_key];
 //先判断这个是不是dwfaker的方法名，如果是，则返回 dwfaker->methods这种
@@ -407,7 +382,7 @@ DDD;
                 $value = "\$dwfaker->$value()";
             }
 
-            return str_finish($value,",");
+            return Str::finish($value,",");
         }
         return false;
     }
@@ -415,13 +390,13 @@ DDD;
     protected function getColumnFaker($column)
     {
         //如果是 *_id ，则先判断有没有对应模型，有就直接返回模型ID
-        if(str_is('*_id',$column)){
+        if(Str::is('*_id',$column)){
 
-            $model= ucfirst(camel_case(str_replace("_id","",$column)));
+            $model= ucfirst(Str::camel(str_replace("_id","",$column)));
             if(in_array($model,$this->model_arr)){
                 return <<<DDD
                 
-    \App\Model\\$model::inRandomOrder()->value("id") ? :  \$faker->numberBetween(0,6)
+    \App\Models\\$model::inRandomOrder()->value("id") ? :  \$faker->numberBetween(0,6)
 ,
 DDD;
 
@@ -429,7 +404,7 @@ DDD;
         }
 
         foreach ($this->faker_common_fields as $key => $faker_common_field) {
-            if (str_is($key, $column)) {
+            if (Str::is($key, $column)) {
                 return $faker_common_field;
 
             }
@@ -444,6 +419,124 @@ DDD;
     }
 
 
+
+
+    protected function genModelRelations()
+    {
+//        dump($this->model_arr);
+        foreach ($this->model_arr as $model) {
+            $this->genSingleModelRelation($model);
+        }
+
+    }
+
+    protected function genSingleModelRelation($model)
+    {
+        $table_name = Str::plural(Str::snake($model));
+        //查找表里有没有 *_id 这种格式的字段
+        if (\Schema::hasTable($table_name)) {
+
+            $id_columns = [];//存储所有*_id的数组
+            foreach (\Schema::getColumnListing($table_name) as $item) {
+                if (Str::is("*_id", $item)) {
+
+                    $id_columns[] = $item;
+                    $relation_model = ucfirst(Str::camel(substr($item, 0,strrpos($item, '_id'))));
+
+                    if (in_array($relation_model, $this->model_arr)) {
+//                        dump($relation_model);
+                        //添加关联关系
+                        $this->addRelation($model, $relation_model);
+                        $this->addRelation($relation_model, $model,"hasMany");
+
+                    }
+                }
+            }
+
+
+            if (count($id_columns) >= 2) {
+                //如果有至少两个*_id，则判断是否可以多对多
+                $combination = collect($id_columns)->crossJoin($id_columns)->reject(function ($value) {
+                    return $value[0] == $value[1];
+                })->toArray();
+
+                foreach ($combination as $item) {
+                    $this->addBelongsToManyRelation($item);
+                }
+//                dump($combination);
+            }
+
+        }
+
+
+    }
+
+
+    protected function addBelongsToManyRelation($item)
+    {
+        $firstModel = ucfirst(Str::camel(substr($item[0], 0, strrpos($item[0], '_id'))));
+        $secondModel = ucfirst(Str::camel(substr($item[1], 0, strrpos($item[1], '_id'))));
+
+        $pivot_name = Str::plural(Str::snake($firstModel.$secondModel));
+//        dump($pivot_name);
+        if (\Schema::hasTable($pivot_name)) {
+            //添加
+            $this->addRelation($firstModel, $secondModel,"belongsToMany");
+            $this->addRelation($secondModel,$firstModel,"belongsToMany");
+
+        }
+
+    }
+
+
+
+    /**
+     * 目前只管一对多，多对多的手工添加吧
+     * @param $model
+     * @param $relation_model
+     */
+    protected function addRelation($model,$relation_model,$relation_type="belongsTo")
+    {
+        $relation_trait_path = $this->model_dir."ZZ" .$model."RelationTrait.php";
+
+        //先添加belong_to
+        $model_content = file_get_contents( $relation_trait_path);
+
+        $method = lcfirst($relation_model);
+
+        if(in_array($relation_type,['hasMany',"belongsToMany"])){
+            $method = Str::plural($method);//如果是一对多，多对多，则用复数
+        }
+
+//        dump($method);
+        $pattern = RegPatterns::publicFunction($method);
+        if (preg_match($pattern, $model_content)) {
+//            $this->warn($method . " " . $model . "已经存在");
+        }else{
+            //添加此方法到模型中
+            $model_content = rtrim(trim($model_content),"}");
+            $model_content .= $this->functionTemplate($method, $relation_model,$relation_type);
+            $model_content .= PHP_EOL."}";
+            file_put_contents($relation_trait_path ,$model_content);
+        }
+
+    }
+
+
+    public function functionTemplate($method,$relation_model,$relation_type)
+    {
+
+        return <<<DDD
+        
+ public function $method()
+    {
+        return \$this->$relation_type($relation_model::class);
+    }
+    
+DDD;
+
+
+    }
 
 
 
