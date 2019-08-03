@@ -9,8 +9,7 @@ namespace DummyControllerNamespace\ControllerTrait;
 
 
 
-use App\Admin\Extensions\BaseExtends\Widgets\OperateWithMsg;
-use App\Admin\Extensions\BaseExtends\Widgets\DereplicateBackBtn;
+use App\Admin\Extensions\BaseExtends\Widgets\Bt3Modals\OperateWithMsg;
 use App\Admin\Extensions\AdminException;
 use App\Admin\Extensions\Form;
 use App\Admin\Extensions\Grid;

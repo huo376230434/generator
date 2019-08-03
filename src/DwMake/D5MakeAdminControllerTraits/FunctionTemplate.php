@@ -131,7 +131,7 @@ DDD
 
                }
                 \$msg = "操作信息";
-                OperateFlow::log(\$msg);
+                 AdminUtil::log(\$msg);
             });
 
         },true,"操作成功");

@@ -6,11 +6,11 @@ use App\Admin\Extensions\AdminException;
 
 use App\Admin\Controllers\AdminBase\AdminController;
 use App\Admin\Extensions\BaseExtends\ModelForm;
+use App\Admin\Extensions\Grid\Tools\BatchActions;
+use App\Admin\Extensions\Show;
 use DummyControllerNamespace\ControllerTrait\DummyControllerClassTrait;
 use DummyControllerNamespace\ControllerTrait\DummyControllerClassExtraTrait;
 use DummyModelNamespace;
-use Encore\Admin\Grid\Tools\BatchActions;
-use Encore\Admin\Show;
 use App\Admin\Extensions\BaseExtends\Widgets\NormalLink;
 
 use App\Admin\Extensions\BaseExtends\CsvExporter\CommonExporter;
@@ -51,8 +51,6 @@ class DummyControllerClass extends AdminController
     protected function initDefaultFilter()
     {
         $this->default_filter = [
-//            'is_sale' => 0,
-//            'admin_user_id' => Admin::user()->id,
             "_sort"=>[
                 'column' => "updated_at",
                 'type' => 'desc'
@@ -85,14 +83,9 @@ class DummyControllerClass extends AdminController
      */
     public function edit($id,Content $content)
     {
-
-//        $content->header('title_header');
-//        $content->description('编辑');
         AdminUtil::headerTitle($content,"title_header",'编辑');
-
         $this->edit_id = $id;
         $this->edit_obj = DummyNameModel::find($id);
-
         $content->body($this->form()->edit($id));
         return $content;
     }
@@ -104,10 +97,7 @@ class DummyControllerClass extends AdminController
      */
     public function create(Content $content)
     {
-//        $content->header('title_header');
-//        $content->description('创建');
         AdminUtil::headerTitle($content,"title_header",'创建');
-
         $content->body($this->form());
         return $content;
     }
@@ -121,7 +111,7 @@ class DummyControllerClass extends AdminController
     {
         $grid = new Grid(new DummyNameModel());
         $_this = $this;
-        $grid->id('ID')->sortable();
+        $grid->column('id',"ID")->sortable();
         $grid->paginate(10);
 //            $grid->expandFilter();
         $grid->actions(function ( Actions $actions)use($_this) {
@@ -138,8 +128,8 @@ class DummyControllerClass extends AdminController
         });
         $this->defaultGrid($grid, $_this);
         $this->export($grid);
-        $grid->created_at("创建时间")->sortable();
-        $grid->updated_at("修改时间")->sortable();
+        $grid->column("created_at","创建时间")->sortable();
+        $grid->column("updated_at","修改时间")->sortable();
 
         return $grid;
     }
@@ -239,10 +229,10 @@ class DummyControllerClass extends AdminController
 
     public function show($id, Content $content)
     {
+        $show = new Show(DummyNameModel::findOrFail($id));
+        //show_hook
         return $content->header('title_header')
             ->description('详情')
-            ->body(CusAdmin::show(DummyNameModel::findOrFail($id), function (Show $show) {
-                //show_hook
-            }));
+            ->body($show);
     }
 }

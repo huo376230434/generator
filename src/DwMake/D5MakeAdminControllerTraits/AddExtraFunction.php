@@ -147,11 +147,7 @@ DDD;
         if ($add_btn) {
             //grid 中添加按钮
             $this->grid_tools[] = <<<DDD
-              \$tools->append("<div class=\"btn-group pull-right\" style=\"margin-right: 10px\">
-    <a href=\"/admin/$this->route_uri/{$v['url']}\" class=\"btn btn-sm btn-info\">
-        <i class=\"fa fa-save\"></i>&nbsp;&nbsp;{$v['name']}
-    </a>
-</div>");
+        \$tools->append(NormalLink::obj('{$v['name']}', urlWithRedirect('/admin/$this->route_uri/{$v['url']}'))->pullRight());
 DDD;
         }
 
