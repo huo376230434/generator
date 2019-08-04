@@ -11,8 +11,6 @@ use Huojunhao\Generator\DwMake\D5MakeAdminControllerTraits\AddGridContent;
 use Huojunhao\Generator\DwMake\D5MakeAdminControllerTraits\AddRoute;
 use Huojunhao\Generator\DwMake\D5MakeAdminControllerTraits\InitConfigs;
 use Huojunhao\Generator\DwMake\Utils\DwMakeBase;
-use Huojunhao\Generator\DwMake\Utils\MakeException;
-use Illuminate\Support\Str;
 
 class DwMakeAdminController extends DwMakeBase
 {
@@ -40,7 +38,10 @@ class DwMakeAdminController extends DwMakeBase
     protected $config_path;
     protected $default_config_path;
 
+    protected $dest_config_dir;
     protected $controller_dir;
+
+    protected $controller_trait_dir;
 
     protected $base_namespace;
     protected $base_model_namespace;
@@ -97,8 +98,6 @@ class DwMakeAdminController extends DwMakeBase
 
     protected $controller_trait_methods;
 
-
-
     protected $feature_test_dir;
     protected $feature_test_stub_path;
     protected $test_arr=[];
@@ -114,28 +113,22 @@ class DwMakeAdminController extends DwMakeBase
 
     protected function makeCommand()
     {
-
+        $this->makeCommandInitConfig();
         $this->initDummy();//初始化替换的数据列表
         foreach($this->getTasks() as $key => $value){
             $this->make_stub($value);
         }
-
 //        检查是否要写一条菜单到数据库中
         $this->needAddMenu();
-
         //操作完毕把默认配置归位；
         if(!$this->option("config")){
             $this->backDefaultConfig();
         };
-
-
     }
-
 
 
     protected function getTasks()
     {
-
         $tasks = [
             ['stub_path' =>$this->controller_trait_path, 'des_path' => $this->controller_trait_path],//替换控制器trait
             ['stub_path' =>$this->controller_path, 'des_path' => $this->controller_path],//替换控制器
@@ -148,10 +141,7 @@ class DwMakeAdminController extends DwMakeBase
             ]//替换路由
             );
         }
-
         return array_merge($this->task_arr,$tasks);
-
-
     }
 
 

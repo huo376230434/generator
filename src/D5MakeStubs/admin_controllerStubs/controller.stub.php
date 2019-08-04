@@ -199,7 +199,7 @@ class DummyControllerClass extends AdminController
     public function destroy($id=null)
     {
         try {
-            if ($id === null) {
+            if (!$id ) {
                 throw new AdminException("请至少选择一项!");
             }
             $ids = explode(",",$id);

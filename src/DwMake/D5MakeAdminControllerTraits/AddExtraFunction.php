@@ -60,8 +60,8 @@ DDD;
         $v['button_type'] = 'NormalLink';
         //            添加action按钮
         $this->grid_action[] = <<<DDD
-        
-        \$actions->append(new {$v['button_type']}("{$v['name']}",url('admin/$this->route_uri/{$v['url']}'),  \$row->id));
+        \$actions->append( {$v['button_type']}::obj("{$v['name']}",url('admin/$this->route_uri/{$v['url']}'),  \$row->id)->isBtn(false));
+
 DDD;
         return $extra_functions;
     }
@@ -102,8 +102,8 @@ DDD;
 //            添加action按钮
 
         $this->grid_action[] = <<<DDD
-        
-        \$actions->append(new {$v['button_type']}("{$v['name']}",url('admin/$this->route_uri/{$v['url']}'),  \$row->id));
+       \$actions->append( {$v['button_type']}::obj("{$v['name']}",url('admin/$this->route_uri/{$v['url']}'),  \$row->id)->isBtn(false));
+
 DDD;
 
 

@@ -26,10 +26,10 @@ trait InitConfigs{
         $this->config_path =  $config_path = storage_path("quickdev/admin_controller/admin_controller_config.php");
 
         $this->default_config_path = storage_path("quickdev/admin_controller/admin_controller_config_default.php");
-        $des_config_dir = storage_path('quickdev/admin_controller/admin_controller_config');
+        $des_config_dir =$this->dest_config_dir = storage_path('quickdev/admin_controller/admin_controller_config');
 
         if( $config_name =  $this->option("config")){
-            $config_path = $des_config_dir."/".ucfirst($config_name)."Controllerconfig.php";
+            $this->config_path = $config_path = $des_config_dir."/".ucfirst($config_name)."Controllerconfig.php";
             // dd($config_path);
             if(!is_file($config_path)){
                 //throw new \Exception($config_name."配置文件不存在");
@@ -94,59 +94,60 @@ trait InitConfigs{
 
         $this->extra_functions = $configs['extra_functions'];
 
+        $this->controller_trait_dir  = $this->controller_dir . "/ControllerTrait/";
+        !is_dir($this->controller_trait_dir) && FileUtil::recursionMkDir($this->controller_trait_dir);
+        $this->controller_trait_path =$this->controller_trait_dir . $this->controller_name . "Trait.php";
+
+        $this->controller_path = $this->controller_dir."/".$this->controller_name.".php";
+        $this->controller_trait_extra_path = $this->controller_trait_dir . $this->controller_name . "ExtraTrait.php";
+
+    }
+
+
+    protected function makeCommandInitConfig()
+    {
+
+        $controller_trait_stub_path = $this->stub_dir.'controller_trait.stub.php';
 
         if (!$this->is_force) {
             //        判断控制器是否存在，若存在，则输出错误
             $this->check_is_exits();
         }
 
-        $controller_trait_dir = $this->controller_dir . "/ControllerTrait/";
-        !is_dir($controller_trait_dir) && FileUtil::recursionMkDir($controller_trait_dir);
-        $this->controller_trait_path =$controller_trait_dir . $this->controller_name . "Trait.php";
-        $controller_trait_stub_path = $this->stub_dir.'controller_trait.stub.php';
         //controllertrait移到文件夹下
         copy($controller_trait_stub_path, $this->controller_trait_path);
 //配置文件备份到   resource/admin_controller_config 文件夹下
 
+        $des_config_dir = $this->dest_config_dir;
         FileUtil::recursionMkDir($des_config_dir);
 
-        copy($config_path, $des_config_dir . '/'.$this->controller_name."config.php");
+        copy(  $this->config_path, $des_config_dir . '/'.$this->controller_name."config.php");
 
 
-        $this->feature_test_stub_path = $this->stub_dir . "feature_test.stub.php";
-        $this->feature_test_dir = base_path('tests/Feature/Admin');
+//        $this->feature_test_stub_path = $this->stub_dir . "feature_test.stub.php";
+//        $this->feature_test_dir = base_path('tests/Feature/Admin');
+//
+//        $this->browser_test_stub_path = $this->stub_dir . "browser_test.stub.php";
+//        $this->browser_test_dir = base_path('tests/Browser/Admin/');
+//        !is_dir($this->browser_test_dir) && mkdir($this->browser_test_dir);
 
-        $this->browser_test_stub_path = $this->stub_dir . "browser_test.stub.php";
-        $this->browser_test_dir = base_path('tests/Browser/Admin/');
-        !is_dir($this->browser_test_dir) && mkdir($this->browser_test_dir);
-
-
-        $this->controller_path = $this->controller_dir."/".$this->controller_name.".php";
         $controller_stub_path = $this->stub_dir . "controller.stub.php";
         //查看有没有controller,没有的话就复制一个
         if(!is_file($this->controller_path)){
 
             copy($controller_stub_path, $this->controller_path);
         }
-
-
-        $this->controller_trait_extra_path = $controller_trait_dir . $this->controller_name . "ExtraTrait.php";
         $controller_trait_extra_stub_path = $this->stub_dir.'controller_extra_trait.stub.php';
         //查看有没有controllerextratrait,没有的话就复制一个
         if(!is_file($this->controller_trait_extra_path)){
             copy($controller_trait_extra_stub_path, $this->controller_trait_extra_path);
         }
-
-
-
     }
 
 
     protected function genFieldsAndFilters($fields)
     {
-
         $this->fields = [];
-
         foreach ($fields as $key => $field) {
             if (!Str::contains($field, "|")) {
                 //不包含| 则不需要处理
@@ -156,17 +157,12 @@ trait InitConfigs{
                 $this->genRealFieldAndFilters($key, $field);
             }
         }
-
-//        dump($this->fields);
-//        dd($this->filter);
     }
 
 
     protected function genRealFieldAndFilters($key, $field)
     {
-
         [$name, $filter_type, $method] = array_pad(explode("|", $field),3,null);
-
         switch ($filter_type){
             case "is":
                 $this->filter['is'][] = $key;
@@ -185,27 +181,22 @@ trait InitConfigs{
                 $this->error($filter_type . "这个搜索类型不存在");
                 die;
         }
-
-
         $this->fields[$key] = $name;
     }
 
 
     protected function getMethod($method,$key=null)
     {
-
         if ($method === null && Str::contains($key,".")) {
             //此时是有关联关系的select, adminUser.name 这种，要生成默认的select
             [$model_name, $column] = explode(".", $key);
             $method = ucfirst($model_name)."@select";
         }
-
         if (Str::contains($method, "@")) {
             [$model, $method] = explode("@", $method);
         }else{
             $model = $this->model_name;
         }
-
         return "\App\Models\\".$model."::".$method."Options()";
     }
 
