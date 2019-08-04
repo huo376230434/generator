@@ -119,7 +119,7 @@ DDD
     {
         return   \$this->tryWithException(function(){
 
-        \$ids = request('ids');
+        \$ids = request('id');
             if (!\$ids) {
                 throw new AdminException("您没有选中任何选项！");
 
