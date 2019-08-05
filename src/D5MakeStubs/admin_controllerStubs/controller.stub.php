@@ -37,7 +37,8 @@ class DummyControllerClass extends AdminController
     protected $edit_id;
 
     protected $default_filter = [];
-
+    public $title_header = "dummy_title_header";
+    protected $menu_uri="DummyControllerName";
     protected $forbidden_actions = [
         //forbidden_action_hook
     ];
@@ -69,7 +70,7 @@ class DummyControllerClass extends AdminController
         if ($url = $this->checkFilter()) {
             return redirect($url);
         };
-        AdminUtil::headerTitle($content,"title_header",'列表');
+        AdminUtil::headerTitle($this,$content,__FUNCTION__);
 
         $content->body($this->grid());
         return $content;
@@ -83,7 +84,7 @@ class DummyControllerClass extends AdminController
      */
     public function edit($id,Content $content)
     {
-        AdminUtil::headerTitle($content,"title_header",'编辑');
+        AdminUtil::headerTitle($this,$content,__FUNCTION__);
         $this->edit_id = $id;
         $this->edit_obj = DummyNameModel::find($id);
         $content->body($this->form()->edit($id));
@@ -97,7 +98,7 @@ class DummyControllerClass extends AdminController
      */
     public function create(Content $content)
     {
-        AdminUtil::headerTitle($content,"title_header",'创建');
+        AdminUtil::headerTitle($this,$content,__FUNCTION__);
         $content->body($this->form());
         return $content;
     }
@@ -229,6 +230,8 @@ class DummyControllerClass extends AdminController
 
     public function show($id, Content $content)
     {
+        AdminUtil::headerTitle($this,$content,__FUNCTION__);
+
         $show = new Show(DummyNameModel::findOrFail($id));
         //show_hook
         return $content->header('title_header')

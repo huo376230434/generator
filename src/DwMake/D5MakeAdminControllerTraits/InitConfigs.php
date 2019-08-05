@@ -17,9 +17,6 @@ trait InitConfigs{
     {
 
 
-//判断是否强制覆盖已经存在的文件
-        $this->is_force = !!$this->argument('is_force');
-
 //        模板文件根目录
         $this->stub_dir = $this->getBaseStubDir().'/admin_controllerStubs/';
 
@@ -109,10 +106,7 @@ trait InitConfigs{
 
         $controller_trait_stub_path = $this->stub_dir.'controller_trait.stub.php';
 
-        if (!$this->is_force) {
-            //        判断控制器是否存在，若存在，则输出错误
-            $this->check_is_exits();
-        }
+
 
         //controllertrait移到文件夹下
         copy($controller_trait_stub_path, $this->controller_trait_path);
@@ -123,7 +117,6 @@ trait InitConfigs{
 
         copy(  $this->config_path, $des_config_dir . '/'.$this->controller_name."config.php");
 
-
 //        $this->feature_test_stub_path = $this->stub_dir . "feature_test.stub.php";
 //        $this->feature_test_dir = base_path('tests/Feature/Admin');
 //
@@ -132,14 +125,13 @@ trait InitConfigs{
 //        !is_dir($this->browser_test_dir) && mkdir($this->browser_test_dir);
 
         $controller_stub_path = $this->stub_dir . "controller.stub.php";
-        //查看有没有controller,没有的话就复制一个
-        if(!is_file($this->controller_path)){
-
+        //查看有没有controller,没有的话就复制一个 (强制覆盖的话就直接重新生成)
+        if(!is_file($this->controller_path) ) {
             copy($controller_stub_path, $this->controller_path);
         }
         $controller_trait_extra_stub_path = $this->stub_dir.'controller_extra_trait.stub.php';
-        //查看有没有controllerextratrait,没有的话就复制一个
-        if(!is_file($this->controller_trait_extra_path)){
+        //查看有没有controllerextratrait,没有的话就复制一个(强制覆盖的话就直接重新生成)
+        if(!is_file($this->controller_trait_extra_path) ){
             copy($controller_trait_extra_stub_path, $this->controller_trait_extra_path);
         }
     }

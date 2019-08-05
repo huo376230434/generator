@@ -52,6 +52,7 @@ trait DwMakeTrait{
         if ($extra_params){
             $contents = str_replace(array_keys($extra_params), array_values($extra_params),$contents);
         }
+        dump($stub_path);
         FileUtil::recursionFilePutContents($des_path, $contents);
         $this->info('生成' . $des_path);
     }

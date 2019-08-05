@@ -16,7 +16,11 @@ trait FunctionTemplate{
 
    public function {$v['url']}(Content \$content)
     {
-        AdminUtil::headerTitle(\$content,'$this->title_header 管理','');
+    
+          AdminUtil::headerTitle(\$this,\$content,__FUNCTION__,[
+            [  'text' => "{$v['name']}"  ]
+        ]);
+    
 
             \$form = new Form(new \App\Models\\$this->model_name());
 

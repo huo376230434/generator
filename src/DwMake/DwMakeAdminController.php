@@ -22,7 +22,7 @@ class DwMakeAdminController extends DwMakeBase
      *
      * @var string
      */
-    protected $signature = 'dm:admincontroller {--config=}  {is_force?} {--remove} ';
+    protected $signature = 'dm:admincontroller {--config=}  {--remove} ';
 
     /**
      * The console command description.
@@ -34,7 +34,6 @@ class DwMakeAdminController extends DwMakeBase
 
     protected $words_arr;
 
-    protected $is_force;
     protected $config_path;
     protected $default_config_path;
 
@@ -158,8 +157,9 @@ class DwMakeAdminController extends DwMakeBase
             "DummyControllerNamespace" => $this->base_namespace,
             "DummyModelNamespace" => $this->base_model_namespace . "\\" . $this->model_name,
             "DummyControllerClass" => $this->controller_name,
+            "DummyControllerName" => $this->base_name,
             "DummyNameModel" => $this->model_name,
-            "title_header" => $this->title_header,
+            "dummy_title_header" => $this->title_header,
             "DummyBaseTest" => $this->base_name
             //        初始化路由的替换
         ];
@@ -175,12 +175,7 @@ class DwMakeAdminController extends DwMakeBase
         }
     }
 
-    private function check_is_exits()
-    {
-        if(is_file($this->controller_trait_path)){
-            $this->errorDie("controller exits");
-        }
-    }
+
 
     protected function getExtraArr ()
     {
