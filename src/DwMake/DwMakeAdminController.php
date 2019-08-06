@@ -11,6 +11,7 @@ use Huojunhao\Generator\DwMake\D5MakeAdminControllerTraits\AddGridContent;
 use Huojunhao\Generator\DwMake\D5MakeAdminControllerTraits\AddRoute;
 use Huojunhao\Generator\DwMake\D5MakeAdminControllerTraits\InitConfigs;
 use Huojunhao\Generator\DwMake\Utils\DwMakeBase;
+use Illuminate\Support\Str;
 
 class DwMakeAdminController extends DwMakeBase
 {
@@ -32,6 +33,8 @@ class DwMakeAdminController extends DwMakeBase
 
     protected $description = '生成控制器，路由等';
 
+    protected $parent_controller;
+    protected $parent_stub_controller_path;
     protected $words_arr;
 
     protected $config_path;
@@ -110,13 +113,21 @@ class DwMakeAdminController extends DwMakeBase
         $this->warn('您还需要手动把work_route中'.$this->route_controller_name.'路由删除');
     }
 
+
     protected function makeCommand()
     {
-        $this->makeCommandInitConfig();
-        $this->initDummy();//初始化替换的数据列表
-        foreach($this->getTasks() as $key => $value){
-            $this->make_stub($value);
+        if ($this->parent_controller) {
+            //有父类的控制器
+            $this->makeChildController();
+        }else{
+            //正常的生成控制器
+            $this->makeCommandInitConfig();
+            $this->initDummy();//初始化替换的数据列表
+            foreach($this->getTasks() as $key => $value){
+                $this->make_stub($value);
+            }
         }
+
 //        检查是否要写一条菜单到数据库中
         $this->needAddMenu();
         //操作完毕把默认配置归位；
@@ -126,13 +137,58 @@ class DwMakeAdminController extends DwMakeBase
     }
 
 
+    protected function makeChildController()
+    {
+        $dummy = array_merge($this->defaultDummy(), [
+            'DummyParentController' => Str::start($this->parent_controller,'\\')
+        ]);
+
+//        dd($routes);
+        //先判断路由是否存在，存在则不生成
+        if (!Str::contains(file_get_contents($this->admin_route_path), '\\' . $this->controller_name)) {
+            $dummy["//admin_route_hook"] = $this->getRoutesFromParent().PHP_EOL.'//admin_route_hook';
+        }
+        $this->quickTask($dummy, $this->getTasks());
+
+    }
+
+
+    protected function getRoutesFromParent()
+    {
+        $parent_base = class_basename($this->parent_controller);
+        $parent_short = Str::replaceLast( 'Controller','',$parent_base);
+//        dump($parent_base);
+//        dump($parent_short);
+//        获得父级的所有路由
+        $routes = collect(file($this->admin_route_path))->filter((function ($value,$key)use($parent_base,$parent_short){
+            Str::contains($value, $parent_base);
+//            dump($value);
+            return  Str::contains($value, "\\".$parent_base) && Str::contains($value,'$router->');
+        }));
+
+        $routes =  $routes  ->map((function ($value,$key)use($parent_base,$parent_short){
+            //加上这个 "(\"". 前缀，为了保证不为重复替换
+            $target = str_replace(["(\"".$parent_short, $parent_base], ["(\"".$this->base_name,$this->controller_name.''], $value);
+            return $target;
+        }))->implode('');
+        return $routes;
+    }
+
+
     protected function getTasks()
     {
-        $tasks = [
-            ['stub_path' =>$this->controller_trait_path, 'des_path' => $this->controller_trait_path],//替换控制器trait
-            ['stub_path' =>$this->controller_path, 'des_path' => $this->controller_path],//替换控制器
-            ['stub_path' =>$this->controller_trait_extra_path, 'des_path' => $this->controller_trait_extra_path],//替换控制器外加方法
-        ];
+        if ($this->parent_controller) {
+            $tasks = [
+                ['stub_path' =>$this->stub_dir."parent_controller_stub.php", 'des_path' => $this->controller_path],//替换控制器
+            ];
+        }else{
+            $tasks = [
+                ['stub_path' =>$this->controller_trait_path, 'des_path' => $this->controller_trait_path],//替换控制器trait
+                ['stub_path' =>$this->controller_path, 'des_path' => $this->controller_path],//替换控制器
+                ['stub_path' =>$this->controller_trait_extra_path, 'des_path' => $this->controller_trait_extra_path],//替换控制器外加方法
+            ];
+        }
+
         if (!$this->option('remove')) {
             array_push($tasks,       [
                 'stub_path' =>$this->admin_route_path,
@@ -152,17 +208,7 @@ class DwMakeAdminController extends DwMakeBase
 
     private function initDummy()
     {
-        $this->words_arr = [
-            //        初始化控器中的替换
-            "DummyControllerNamespace" => $this->base_namespace,
-            "DummyModelNamespace" => $this->base_model_namespace . "\\" . $this->model_name,
-            "DummyControllerClass" => $this->controller_name,
-            "DummyControllerName" => $this->base_name,
-            "DummyNameModel" => $this->model_name,
-            "dummy_title_header" => $this->title_header,
-            "DummyBaseTest" => $this->base_name
-            //        初始化路由的替换
-        ];
+        $this->words_arr = $this->defaultDummy();
 
         //     todo   判断是否添加详情
 
@@ -173,6 +219,21 @@ class DwMakeAdminController extends DwMakeBase
             array_push($this->template_words, $k);
             array_push($this->replace_words, $value);
         }
+    }
+
+    protected function defaultDummy()
+    {
+        return [
+            //        初始化控器中的替换
+            "DummyControllerNamespace" => $this->base_namespace,
+            "DummyModelNamespace" => $this->base_model_namespace . "\\" . $this->model_name,
+            "DummyControllerClass" => $this->controller_name,
+            "DummyControllerName" => $this->base_name,
+            "DummyNameModel" => $this->model_name,
+            "dummy_title_header" => $this->title_header,
+            "DummyBaseTest" => $this->base_name
+            //        初始化路由的替换
+        ];
     }
 
 

@@ -10,8 +10,8 @@ use App\Admin\Extensions\Grid\Tools\BatchActions;
 use App\Admin\Extensions\Show;
 use DummyControllerNamespace\ControllerTrait\DummyControllerClassTrait;
 use DummyControllerNamespace\ControllerTrait\DummyControllerClassExtraTrait;
-use DummyModelNamespace;
 use App\Admin\Extensions\BaseExtends\Widgets\NormalLink;
+use DummyModelNamespace;
 
 use App\Admin\Extensions\BaseExtends\CsvExporter\CommonExporter;
 use App\Admin\Extensions\CusAdmin;
@@ -114,7 +114,7 @@ class DummyControllerClass extends AdminController
         $_this = $this;
         $grid->column('id',"ID")->sortable();
         $grid->paginate(10);
-//            $grid->expandFilter();
+            $grid->expandFilter();
         $grid->actions(function ( Actions $actions)use($_this) {
             $_this->defaultGridActions($actions, $_this);
         });

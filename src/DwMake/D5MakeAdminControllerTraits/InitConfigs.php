@@ -16,10 +16,8 @@ trait InitConfigs{
     protected function init_configs()
     {
 
-
 //        模板文件根目录
         $this->stub_dir = $this->getBaseStubDir().'/admin_controllerStubs/';
-
         $this->config_path =  $config_path = storage_path("quickdev/admin_controller/admin_controller_config.php");
 
         $this->default_config_path = storage_path("quickdev/admin_controller/admin_controller_config_default.php");
@@ -34,6 +32,8 @@ trait InitConfigs{
             }
         }
         $configs = include $config_path;
+
+        $this->parent_controller = $configs['parent_controller'] ?? null;
 
 //        设置默认参数
         $configs['route_path'] = $configs['route_path'] ?? "work";
@@ -98,6 +98,17 @@ trait InitConfigs{
         $this->controller_path = $this->controller_dir."/".$this->controller_name.".php";
         $this->controller_trait_extra_path = $this->controller_trait_dir . $this->controller_name . "ExtraTrait.php";
 
+
+        if (!$this->option('remove') && !$this->option("config")) {
+            //配置文件备份到   resource/admin_controller_config 文件夹下
+
+            $des_config_dir = $this->dest_config_dir;
+            FileUtil::recursionMkDir($des_config_dir);
+
+            copy(  $this->config_path, $des_config_dir . '/'.$this->controller_name."config.php");
+
+        }
+
     }
 
 
@@ -106,16 +117,8 @@ trait InitConfigs{
 
         $controller_trait_stub_path = $this->stub_dir.'controller_trait.stub.php';
 
-
-
         //controllertrait移到文件夹下
         copy($controller_trait_stub_path, $this->controller_trait_path);
-//配置文件备份到   resource/admin_controller_config 文件夹下
-
-        $des_config_dir = $this->dest_config_dir;
-        FileUtil::recursionMkDir($des_config_dir);
-
-        copy(  $this->config_path, $des_config_dir . '/'.$this->controller_name."config.php");
 
 //        $this->feature_test_stub_path = $this->stub_dir . "feature_test.stub.php";
 //        $this->feature_test_dir = base_path('tests/Feature/Admin');

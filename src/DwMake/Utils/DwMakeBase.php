@@ -19,6 +19,7 @@ abstract  class DwMakeBase extends Command{
 
     protected $model_dir;
 
+    protected $remove;
     public function __construct()
     {
         parent::__construct();
@@ -62,12 +63,11 @@ abstract  class DwMakeBase extends Command{
         $this->info('删除完毕!');
     }
 
-
     public function handle()
     {
-
+        $this->remove = $this->option('remove');
         $this->init_configs();//初始化配置项
-        if ($this->option('remove')) {
+        if ($this->remove) {
             $this->handleRemove();
             return ;
         }

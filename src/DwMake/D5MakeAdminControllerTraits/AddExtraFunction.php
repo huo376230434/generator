@@ -60,9 +60,10 @@ DDD;
         $v['button_type'] = 'NormalLink';
         //            添加action按钮
         $this->grid_action[] = <<<DDD
-        \$actions->append( {$v['button_type']}::obj("{$v['name']}",url('admin/$this->route_uri/{$v['url']}'),  \$row->id)->isBtn(false));
+        \$actions->append( {$v['button_type']}::obj("{$v['name']}",url("admin/\$this->menu_uri/{$v['url']}"),  \$row->id)->isBtn(false));
 
 DDD;
+
         return $extra_functions;
     }
 
@@ -102,7 +103,7 @@ DDD;
 //            添加action按钮
 
         $this->grid_action[] = <<<DDD
-       \$actions->append( {$v['button_type']}::obj("{$v['name']}",url('admin/$this->route_uri/{$v['url']}'),  \$row->id)->isBtn(false));
+       \$actions->append( {$v['button_type']}::obj("{$v['name']}",url("admin/\$this->menu_uri/{$v['url']}"),  \$row->id)->isBtn(false));
 
 DDD;
 
@@ -147,7 +148,7 @@ DDD;
         if ($add_btn) {
             //grid 中添加按钮
             $this->grid_tools[] = <<<DDD
-        \$tools->append(NormalLink::obj('{$v['name']}', urlWithRedirect('/admin/$this->route_uri/{$v['url']}'))->pullRight());
+        \$tools->append(NormalLink::obj('{$v['name']}', UrlUtil::urlWithRedirect("/admin/\$this->menu_uri/{$v['url']}"))->pullRight());
 DDD;
         }
 
@@ -188,7 +189,7 @@ DDD;
             //        添加grid中的batch操作按钮
             $this->grid_tools['batch'][] = <<<DDD
                 
-          \$batch->add("{$v['name']}", new {$v['batch_type']}(url('admin/$this->route_uri/{$v['url']}'),"{$v['name']}"));
+          \$batch->add("{$v['name']}", new {$v['batch_type']}(url("admin/\$this->menu_uri/{$v['url']}"),"{$v['name']}"));
     
 DDD;
         }else{
@@ -199,7 +200,7 @@ DDD;
 //        添加grid中的batch操作按钮
             $this->grid_tools['batch'][] = <<<DDD
                 
-    \$batch->add("{$v['name']}",new $batchClassName(url('admin/$this->route_uri/{$v['url']}'),"{$v['name']}"));
+    \$batch->add("{$v['name']}",new $batchClassName(url("admin/\$this->menu_uri/{$v['url']}"),"{$v['name']}"));
 DDD;
 
 //        添加操作batch类
