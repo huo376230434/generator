@@ -45,12 +45,12 @@ abstract  class DwMakeBase extends Command{
     protected function handleRemove()
     {
         $this->removePrefix();
-        foreach ($this->getTasks() as $task) {
-            $this->info('删除' . $task['des_path']);
-            FileUtil::unlinkFileOrDir($task['des_path']);
-        }
+        $this->quickRemove($this->getTasks());
         $this->removedCallback();
     }
+
+
+
 
     protected function errorDie($msg)
     {

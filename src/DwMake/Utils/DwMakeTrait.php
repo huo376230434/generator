@@ -14,7 +14,7 @@ trait DwMakeTrait{
 //    protected $template_words=[];
 //    protected $replace_words=[];
 
-    protected function make_stub($item,$template_words=null,$replace_words=null){
+    protected function make_stub($item,$template_words=null,$replace_words=null,$force=true){
         !$template_words && $template_words = $this->template_words;
         !$replace_words && $replace_words = $this->replace_words;
 
@@ -24,7 +24,7 @@ trait DwMakeTrait{
 //        dd(realpath($stub_path));
 //        dd(is_dir($stub_path));
         if (!is_dir($stub_path)) {
-            $this->moveFile($stub_path, $template_words, $replace_words, $des_path,$extra_params);
+            $this->moveFile($stub_path, $template_words, $replace_words, $des_path,$extra_params,$force);
         }
         else{
             //移动文件夹
@@ -39,20 +39,27 @@ trait DwMakeTrait{
                 if ($extra_params) {
                     $temp_item['params'] = $extra_params;
                 }
-                $this->make_stub($temp_item, $template_words, $replace_words);
+                $this->make_stub($temp_item, $template_words, $replace_words,$force);
             }
         }
     }
 
 
-    protected function moveFile($stub_path,$template_words,$replace_words,$des_path,$extra_params=null)
+    protected function moveFile($stub_path,$template_words,$replace_words,$des_path,$extra_params=null,$force=true)
     {
+        if (!$force) {
+            //如果不强制覆盖，则判断目标文件存不存在，存在则报已经存在
+            if (is_file($des_path)) {
+                $this->warn('已存在' . $des_path.' 不覆盖');
+return false;
+            }
+        }
         $contents = file_get_contents($stub_path);
         $contents = str_replace($template_words,$replace_words,$contents);
         if ($extra_params){
             $contents = str_replace(array_keys($extra_params), array_values($extra_params),$contents);
         }
-        dump($stub_path);
+//        dump($stub_path);
         FileUtil::recursionFilePutContents($des_path, $contents);
         $this->info('生成' . $des_path);
     }
@@ -95,7 +102,7 @@ trait DwMakeTrait{
 //    }
 
 
-    protected function quickTask($words_arr,$tasks)
+    protected function quickTask($words_arr,$tasks,$force=true)
     {
 
         $template_words = [];
@@ -107,9 +114,21 @@ trait DwMakeTrait{
         }
 
         foreach($tasks as $key => $value){
-            $this->make_stub($value,$template_words,$replace_words);
+            $this->make_stub($value,$template_words,$replace_words,$force);
         }
     }
+
+    protected function quickRemove($tasks=null)
+    {
+        if (is_null($tasks)) {
+            $tasks = $this->getTasks();
+        }
+        foreach ( $tasks as $task) {
+            $this->info('删除' . $task['des_path']);
+            FileUtil::unlinkFileOrDir($task['des_path']);
+        }
+    }
+
 
 
 
@@ -124,6 +143,12 @@ trait DwMakeTrait{
             }
         }
        return $new_arr;
+    }
+
+
+    protected function composerDumpAutoload()
+    {
+        echo  shell_exec("composer dump");
     }
 
 
