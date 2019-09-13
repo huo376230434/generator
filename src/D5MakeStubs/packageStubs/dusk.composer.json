@@ -1,10 +1,7 @@
 {
     "name": "huojunhao/DummySnakePackage",
     "require": {
-        "laravel/framework": "^5.7",
-        "laravel/dusk": "^5.0",
-        "phpunit/phpunit": "^7.0"
-
+        "laravel/framework": "^5.8"
     },
     "autoload": {
         "psr-4": {

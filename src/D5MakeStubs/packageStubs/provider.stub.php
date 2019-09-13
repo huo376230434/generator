@@ -16,6 +16,12 @@ class DummyPackageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        if ($this->app->runningInConsole()) {
+            // 注册publish
+//            $this->publishes([__DIR__.'/../config' => config_path()], 'laravel-admin-config');
+//
+//            $this->publishes([__DIR__.'/../resources/assets' => public_path('vendor/laravel-admin')], 'laravel-admin-assets');
+        }
 
     }
 

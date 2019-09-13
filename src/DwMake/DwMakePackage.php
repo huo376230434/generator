@@ -94,7 +94,7 @@ DDD;
 
     protected function getProviderName()
     {
-        return $this->command_param . 'ServiceProvider';
+        return ucfirst($this->command_param) . 'ServiceProvider';
     }
 
     public function makeCommand()
@@ -106,7 +106,7 @@ DDD;
 
         $dummies = [
             "DummySnakePackage" => Str::snake($this->command_param),
-            "DummyPackage" => $this->command_param
+            "DummyPackage" => ucfirst($this->command_param)
         ];
         $this->quickTask($dummies, $this->getTasks());
         $this->initGit();
