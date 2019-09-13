@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 class GeneratorServiceProvider extends ServiceProvider
 {
+    //hhhh
     use GeneratorServiceProviderTrait;
     protected $namespace_prefix = "Huojunhao\Generator\DwMake\\";
 
